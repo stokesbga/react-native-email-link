@@ -25,5 +25,10 @@
    },
    "peerDependencies": {
       "react-native": ">=0.40.0"
-   }
+   },
+   "rnpm": {
+      "android": {
+         "sourceDir": "./android"
+      }
+   },
 }

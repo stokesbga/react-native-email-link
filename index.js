@@ -13,8 +13,6 @@ class EmailException {
   }
 }
 
-const isIOS = Platform.OS === 'ios'
-
 const prefixes = {
   'apple-mail': 'message://',
   'gmail': 'googlegmail://',
@@ -72,33 +70,22 @@ export function askAppChoice (title = 'Open mail app', message = 'Which app woul
       return resolve(availableApps[0] || null)
     }
 
-    if (isIOS) {
-      let options = availableApps.map((app) => titles[app])
-      options.push('Cancel')
+    let options = availableApps.map((app) => titles[app])
+    options.push('Cancel')
 
-      ActionSheetIOS.showActionSheetWithOptions({
-        title: title,
-        message: message,
-        options: options,
-        cancelButtonIndex: options.length - 1
-      }, (buttonIndex) => {
-        if (buttonIndex === options.length - 1) {
-          return resolve(null)
-        }
-        return resolve(availableApps[buttonIndex])
-      })
+    ActionSheetIOS.showActionSheetWithOptions({
+      title: title,
+      message: message,
+      options: options,
+      cancelButtonIndex: options.length - 1
+    }, (buttonIndex) => {
+      if (buttonIndex === options.length - 1) {
+        return resolve(null)
+      }
+      return resolve(availableApps[buttonIndex])
+    })
 
-      return
-    }
-
-    let options = availableApps.map((app) => ({text: titles[app], onPress: () => resolve(app)}))
-    options.push({text: 'Cancel', onPress: () => resolve(null), style: 'cancel'})
-    Alert.alert(
-      title,
-      message,
-      options,
-      {onDismiss: () => resolve(null)}
-    )
+    return
   })
 }
 
@@ -113,23 +100,25 @@ export async function openInbox (options = {}) {
   if (!options || typeof options !== 'object') {
     throw new EmailException('First parameter of `openInbox` should contain object with options.')
   }
+
+  if (Platform.OS === 'android') {
+    // We can't pre-choose, since we use native intents
+    if (!('Email' in NativeModules)) {
+      throw new EmailException('NativeModules.Email does not exist. Check if you installed the Android dependencies correctly.')
+    }
+
+    NativeModules.Email.open()
+    return
+  }
+
   if ('app' in options && options.app && Object.keys(prefixes).indexOf(options.app) < 0) {
     throw new EmailException('Option `app` should be undefined, null, or one of the following: "' + Object.keys(prefixes).join('", "') + '".')
   }
 
   let app = options.app && options.app.length ? options.app : null
-
   if (!app) {
     app = await askAppChoice()
   }
 
-  let url = null
-  switch (app) {
-    default:
-      url = prefixes[app]
-  }
-
-  if (url) {
-    return Linking.openURL(url)
-  }
+  return Linking.openURL(prefixes[app])
 }
