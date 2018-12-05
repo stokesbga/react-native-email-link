@@ -1,21 +1,17 @@
 package com.facebook.react.modules.email;
 
-import com.facebook.react.bridge.NativeModule;
-import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContext;
-import com.facebook.react.bridge.ReactContextBaseJavaModule;
-import com.facebook.react.bridge.ReactMethod;
-
 import android.content.Intent;
 import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.ReactMethod;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class EmailModule extends ReactContextBaseJavaModule {
 
@@ -48,7 +44,13 @@ public class EmailModule extends ReactContextBaseJavaModule {
             ri = resInfo.get(i);
             String packageName = ri.activityInfo.packageName;
             Intent intent = pm.getLaunchIntentForPackage(packageName);
-            intentList.add(new LabeledIntent(intent, packageName, ri.loadLabel(pm), ri.icon));
+            try {
+                LabeledIntent li = new LabeledIntent(intent, packageName, ri.loadLabel(pm), ri.icon);
+                intentList.add(li);
+            } catch(Exception e) {
+                System.out.println(e);
+            }
+
         }
 
         LabeledIntent[] extraIntents = intentList.toArray(new LabeledIntent[intentList.size()]);
